@@ -13,7 +13,7 @@
 
     <!-- Listeners -->
     <listeners>
-        <listener class-name="listeners.TestListener"/>
+        <listener class-name="listeners.RetryAnnotationTransformer"/>
     </listeners>
 
     <test name="User API Tests">

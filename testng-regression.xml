@@ -3,6 +3,10 @@
 
 <!-- Run only tests having group regression from tests package. -->
 <suite name="API Automation Regression Suite">
+    <listeners>
+        <listener class-name="listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
     <test name="Regression Tests">
         <groups>
             <run>

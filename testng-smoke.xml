@@ -3,6 +3,10 @@
 
 <!-- Run only tests having group smoke from tests package. -->
 <suite name="API Automation Smoke Suite">
+    <listeners>
+        <listener class-name="listeners.RetryAnnotationTransformer"/>
+    </listeners>
+
     <test name="Smoke Tests">
         <groups>
             <run>
