@@ -1,12 +1,13 @@
 package endpoints;
 
+import reader.PropertyFileReader;
+
 public class Routes {
 
-    public static String base_url = "https://petstore.swagger.io/v2";
+    public static String BASE_URL = PropertyFileReader.getInstance().getBaseUrl();
 
-    /* User module */
-    public static String POST_URL = base_url + "/user";
-    public static String GET_URL = base_url + "/user/{username}";
-    public static String PUT_URL = base_url + "/user/{username}";
-    public static String DELETE_URL = base_url + "/user/{username}";
+    public static String POST_URL = BASE_URL + "/user";
+    public static String GET_URL = BASE_URL + "/user/{username}";
+    public static String PUT_URL = BASE_URL + "/user/{username}";
+    public static String DELETE_URL = BASE_URL + "/user/{username}";
 }

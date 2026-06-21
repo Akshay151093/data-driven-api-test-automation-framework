@@ -31,7 +31,6 @@ public class UserTestsUsingDataProvider {
     @Description("Verify that new users can be created successfully")
     void testCreateUsers(String id, String un, String fn,
                          String ln, String e, String pwd, String ph, String s) {
-        logger.info("");
         payload = new User();
         payload.setId(Integer.parseInt(id));
         payload.setUsername(un);
@@ -43,7 +42,6 @@ public class UserTestsUsingDataProvider {
         payload.setUserStatus(Integer.parseInt(s));
         Response createResponse = UserEndPoints.createUser(payload);
         userAssertions.verifyStatusCode(createResponse, 200);
-        logger.info("");
     }
 
     @Test (priority = 2, dependsOnMethods = "testCreateUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)
@@ -55,7 +53,6 @@ public class UserTestsUsingDataProvider {
         userAssertions.verifyUsername(getResponse, payload.getUsername());
         userAssertions.verifyFirstName(getResponse, payload.getEmail());
         userAssertions.verifyLastName(getResponse, payload.getPhone());
-
     }
 
     @Test (priority = 3, dependsOnMethods = "testGetUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)

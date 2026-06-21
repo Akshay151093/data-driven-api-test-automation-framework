@@ -4,6 +4,7 @@ import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import reader.PropertyFileReader;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -17,11 +18,10 @@ public class ExcelUtils {
     private static XSSFSheet ExcelWSheet;
     private static XSSFWorkbook ExcelWBook;
     private static String currentFilePath;
-    private static final String TEST_DATA_PATH = "testData/";
-    private static final String EXCEL_EXTENSION = ".xlsx";
+    private static final String TEST_DATA_PATH = PropertyFileReader.getInstance().getTestDataPath();
 
     private static String getPath(String fileName) {
-        return TEST_DATA_PATH + fileName + EXCEL_EXTENSION;
+        return TEST_DATA_PATH + fileName + ".xlsx";
     }
 
     public static void setExcelFile(String fileName, String sheetName) throws Exception {
