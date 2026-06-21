@@ -1,6 +1,5 @@
 package assertions;
 
-import endpoints.UserEndPoints;
 import io.qameta.allure.Step;
 import io.restassured.response.Response;
 import org.apache.logging.log4j.Logger;
@@ -9,7 +8,7 @@ import utils.LogManagerUtil;
 
 public class UserAssertions {
 
-    private static final Logger logger = LogManagerUtil.getLogger(UserEndPoints.class);
+    private static final Logger logger = LogManagerUtil.getLogger(UserAssertions.class);
 
     @Step("Verify response status code is {expectedStatusCode}")
     public void verifyStatusCode(Response response, int expectedStatusCode) {

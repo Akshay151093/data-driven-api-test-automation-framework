@@ -1,10 +1,8 @@
 package utils;
 
+import config.ConfigManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.usermodel.XSSFSheet;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import reader.PropertyFileReader;
 
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -15,210 +13,170 @@ public class ExcelUtils {
 
     private static final Logger logger = LogManagerUtil.getLogger(ExcelUtils.class);
     private static final DataFormatter DATA_FORMATTER = new DataFormatter(Locale.US);
-    private static XSSFSheet ExcelWSheet;
-    private static XSSFWorkbook ExcelWBook;
-    private static String currentFilePath;
-    private static final String TEST_DATA_PATH = PropertyFileReader.getInstance().getTestDataPath();
+    private static final String TEST_DATA_PATH = ConfigManager.getInstance().getTestDataPath();
+
+    private ExcelUtils() {
+    }
 
     private static String getPath(String fileName) {
         return TEST_DATA_PATH + fileName + ".xlsx";
     }
 
-    public static void setExcelFile(String fileName, String sheetName) throws Exception {
-        String path=getPath(fileName);
-        logger.info("Loading Excel file '{}' and sheet '{}'.", fileName, sheetName);
-        if (ExcelWBook != null && path.equals(currentFilePath)) {
-            setSheet(sheetName);
-            logger.debug("Workbook already loaded. Switching to sheet '{}'.", sheetName);
-            return;
-        }
-        closeWorkbook();
+    private static Workbook openWorkbook(String fileName) {
+        String path = getPath(fileName);
         logger.debug("Opening workbook: {}", path);
-        try (FileInputStream excelFile = new FileInputStream(path)) {
-            ExcelWBook = new XSSFWorkbook(excelFile);
-            ExcelWSheet = ExcelWBook.getSheet(sheetName);
-            if (ExcelWSheet == null) {
-                throw new RuntimeException("Sheet not found: " + sheetName);
-            }
-            ExcelWBook.setForceFormulaRecalculation(true);
-            currentFilePath = path;
-            logger.info("Workbook '{}' loaded successfully.", fileName);
-            logger.debug("Active sheet set to '{}'.", sheetName);
-        } catch (Exception e) {
-            logger.error("Unable to load workbook '{}' and sheet '{}'.", fileName, sheetName, e);
-            throw e;
+        try {
+            return WorkbookFactory.create(new FileInputStream(path));
+        } catch (IOException e) {
+            throw new RuntimeException("Unable to open Excel file: " + path, e);
         }
     }
 
-    private static void setSheet(String sheetName) {
-        ExcelWSheet = ExcelWBook.getSheet(sheetName);
-        logger.debug("Selecting sheet '{}'.", sheetName);
-        if (ExcelWSheet == null) {
-            logger.error("Sheet '{}' not found.", sheetName);
+    private static Sheet getSheet(Workbook workbook, String sheetName) {
+        Sheet sheet = workbook.getSheet(sheetName);
+        if (sheet == null) {
             throw new RuntimeException("Sheet not found: " + sheetName);
         }
+        return sheet;
     }
 
-    private static Integer getRowNumber(String key, int col) {
-        logger.debug("Searching for test data label '{}'.", key);
-        for (Row row : ExcelWSheet) {
-            Cell cell = row.getCell(col);
-            String text = DATA_FORMATTER.formatCellValue(cell);
-            if (key.equals(text)) {
-                logger.debug("Test data label '{}' found at row {}.", key, row.getRowNum());
-                return row.getRowNum();
-            }
+    private static String getCellValue(Workbook workbook, Cell cell) {
+        if (cell == null) {
+            return "";
         }
-        logger.warn("Test data label '{}' not found.", key);
-        return -1;
+        if (cell.getCellType() == CellType.FORMULA) {
+            FormulaEvaluator evaluator = workbook.getCreationHelper().createFormulaEvaluator();
+            return DATA_FORMATTER.formatCellValue(cell, evaluator).trim();
+        }
+        return DATA_FORMATTER.formatCellValue(cell).trim();
     }
 
-    private static void closeWorkbook() {
-        try {
-            if (ExcelWBook != null) {
-                ExcelWBook.close();
-                ExcelWBook = null;
-                ExcelWSheet = null;
-                currentFilePath = null;
-                logger.info("Closing Excel workbook.");
-            }
-        } catch (IOException e) {
-            logger.error("Error while closing workbook.", e);
-            throw new RuntimeException("Error closing workbook", e);
+    private static boolean isRowEmpty(Workbook workbook, Row row) {
+        if (row == null) {
+            return true;
         }
+        for (Cell cell : row) {
+            if (!getCellValue(workbook, cell).isEmpty()) {
+                return false;
+            }
+        }
+        return true;
     }
 
-    private static String getExcelCellValue(int rowNum, int colNum) {
-        try {
-            Row row = ExcelWSheet.getRow(rowNum);
-            if (row == null) {
-                return "";
-            }
-            Cell cell = row.getCell(colNum);
-            if (cell == null) {
-                return "";
-            }
-            if (cell.getCellType() == CellType.FORMULA) {
-                FormulaEvaluator evaluator = ExcelWBook.getCreationHelper().createFormulaEvaluator();
-                cell = evaluator.evaluateInCell(cell);
-            }
-            return switch (cell.getCellType()) {
-                case STRING -> cell.getStringCellValue();
-                case BOOLEAN -> String.valueOf(cell.getBooleanCellValue());
-                default -> new DataFormatter(Locale.US).formatCellValue(cell);
-            };
-        } catch (Exception e) {
-            throw new RuntimeException("Error reading cell data", e);
-        }
-    }
-
-    public static LinkedHashMap<String, String> getDataFromRow(String testDataLabel) {
-        logger.info("Fetching test data for '{}'.", testDataLabel);
-        int rowNumber = getRowNumber(testDataLabel, 0);
-        if (rowNumber == -1) {
-            logger.warn("No test data found for '{}'.", testDataLabel);
-            return null;
-        }
-        LinkedHashMap<String, String> map = new LinkedHashMap<>();
-        int col = 2;
-        int maxColumns = 50;
-        while (col < maxColumns) {
-            String label = getExcelCellValue(rowNumber, col);
-            if (label == null || label.isEmpty()) {
-                break;
-            }
-            String value = getExcelCellValue(rowNumber + 1, col);
-            map.put(label, value);
-            col++;
-        }
-        logger.info("Loaded {} data fields for '{}'.", map.size(), testDataLabel);
-        return map;
-    }
-
-    public static int getRowCount(String file, String sheet) {
-        logger.debug("Calculating row count for file '{}' and sheet '{}'.", file, sheet);
-        try {
-            setExcelFile(file, sheet);
-            int count = ExcelWSheet.getLastRowNum() + 1;
-            while (count > 0) {
-                Row row = ExcelWSheet.getRow(count - 1);
-                if (row != null) {
-                    boolean hasData = false;
-                    for (Cell cell : row) {
-                        if (!new DataFormatter().formatCellValue(cell).trim().isEmpty()) {
-                            hasData = true;
-                            break;
-                        }
-                    }
-                    if (hasData) {
-                        break;
-                    }
-                }
+    public static int getRowCount(String fileName, String sheetName) {
+        logger.debug("Calculating row count for file '{}' and sheet '{}'.", fileName, sheetName);
+        try (Workbook workbook = openWorkbook(fileName)) {
+            Sheet sheet = getSheet(workbook, sheetName);
+            int count = sheet.getLastRowNum() + 1;
+            while (count > 0 && isRowEmpty(workbook, sheet.getRow(count - 1))) {
                 count--;
             }
-            logger.debug("Sheet '{}' contains {} populated rows.", sheet, count);
+            logger.debug("Sheet '{}' contains {} populated rows.", sheetName, count);
             return count;
-        } catch (Exception e) {
-            logger.error("Unable to calculate row count for sheet '{}'.", sheet, e);
-            throw new RuntimeException("Error getting row count", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Error closing workbook for file: " + fileName, e);
         }
     }
 
-    public static int getColumnCount(String file, String sheet) {
-        logger.debug("Calculating column count for sheet '{}'.", sheet);
-        try {
-            setExcelFile(file, sheet);
-            Row headerRow = ExcelWSheet.getRow(0);
+    public static int getColumnCount(String fileName, String sheetName) {
+        logger.debug("Calculating column count for file '{}' and sheet '{}'.", fileName, sheetName);
+        try (Workbook workbook = openWorkbook(fileName)) {
+            Sheet sheet = getSheet(workbook, sheetName);
+            Row headerRow = sheet.getRow(0);
             if (headerRow == null) {
                 return 0;
             }
             int count = 0;
-
             for (Cell cell : headerRow) {
-                if (!DATA_FORMATTER.formatCellValue(cell).trim().isEmpty()) {
+                if (!getCellValue(workbook, cell).isEmpty()) {
                     count++;
                 }
             }
-            logger.debug("Sheet '{}' contains {} populated columns.", sheet, count);
+            logger.debug("Sheet '{}' contains {} populated columns.", sheetName, count);
             return count;
-        } catch (Exception e) {
-            logger.error("Unable to calculate column count for sheet '{}'.", sheet, e);
-            throw new RuntimeException("Error getting column count", e);
+        } catch (IOException e) {
+            throw new RuntimeException("Error closing workbook for file: " + fileName, e);
         }
     }
 
-    public static String getCellValue(String file, String sheet, int rowNum, int colNum) {
-        logger.trace("Reading cell [Sheet='{}', Row={}, Column={}]", sheet, rowNum, colNum);
-        try {
-            setExcelFile(file, sheet);
-            return getExcelCellValue(rowNum, colNum);
-        } catch (Exception e) {
-            logger.error("Failed to read cell [Sheet='{}', Row={}, Column={}]", sheet, rowNum, colNum, e);
-            throw new RuntimeException(
-                    String.format("Error reading cell [%d, %d] from sheet '%s'", rowNum, colNum, sheet),
-                    e);
+    public static String getCellValue(String fileName, String sheetName, int rowNum, int colNum) {
+        logger.trace("Reading cell [Sheet='{}', Row={}, Column={}]", sheetName, rowNum, colNum);
+        try (Workbook workbook = openWorkbook(fileName)) {
+            Sheet sheet = getSheet(workbook, sheetName);
+            Row row = sheet.getRow(rowNum);
+            if (row == null) {
+                return "";
+            }
+            Cell cell = row.getCell(colNum);
+            return getCellValue(workbook, cell);
+        } catch (IOException e) {
+            throw new RuntimeException("Error closing workbook for file: " + fileName, e);
         }
     }
 
-    public static int getColumnIndex(String file, String sheet, String columnName) {
+    public static int getColumnIndex(String fileName, String sheetName, String columnName) {
         logger.debug("Searching for column '{}'.", columnName);
-        try {
-            setExcelFile(file, sheet);
-            Row headerRow = ExcelWSheet.getRow(0);
+        try (Workbook workbook = openWorkbook(fileName)) {
+            Sheet sheet = getSheet(workbook, sheetName);
+            Row headerRow = sheet.getRow(0);
             if (headerRow == null) {
-                throw new RuntimeException("Header row not found.");
+                throw new RuntimeException("Header row not found in sheet: " + sheetName);
             }
             for (Cell cell : headerRow) {
-                String value = DATA_FORMATTER.formatCellValue(cell).trim();
+                String value = getCellValue(workbook, cell);
                 if (value.equalsIgnoreCase(columnName.trim())) {
-                    logger.debug("Column '{}' found at index {}.", columnName, cell.getColumnIndex());
                     return cell.getColumnIndex();
                 }
             }
-            logger.error("Column '{}' not found.", columnName);
             throw new RuntimeException("Column not found: " + columnName);
-        } catch (Exception e) {
-            throw new RuntimeException("Error getting column index for: " + columnName, e);
+        } catch (IOException e) {
+            throw new RuntimeException("Error closing workbook for file: " + fileName, e);
         }
+    }
+
+    public static LinkedHashMap<String, String> getDataFromRow(String fileName, String sheetName, String testDataLabel) {
+        logger.info("Fetching test data for '{}'.", testDataLabel);
+        try (Workbook workbook = openWorkbook(fileName)) {
+            Sheet sheet = getSheet(workbook, sheetName);
+            int rowNumber = findRowNumber(workbook, sheet, testDataLabel, 0);
+            if (rowNumber == -1) {
+                throw new RuntimeException("No test data found for: " + testDataLabel);
+            }
+            LinkedHashMap<String, String> data = new LinkedHashMap<>();
+            Row labelRow = sheet.getRow(rowNumber);
+            Row valueRow = sheet.getRow(rowNumber + 1);
+            int col = 2;
+            int maxColumns = 50;
+            while (col < maxColumns) {
+                String label = getCellValue(workbook, labelRow.getCell(col));
+                if (label.isEmpty()) {
+                    break;
+                }
+                String value = valueRow == null ? "" : getCellValue(workbook, valueRow.getCell(col));
+                data.put(label, value);
+                col++;
+            }
+            logger.info("Loaded {} data fields for '{}'.", data.size(), testDataLabel);
+            return data;
+        } catch (IOException e) {
+            throw new RuntimeException("Error closing workbook for file: " + fileName, e);
+        }
+    }
+
+    private static int findRowNumber(
+            Workbook workbook,
+            Sheet sheet,
+            String key,
+            int columnIndex
+    ) {
+        for (Row row : sheet) {
+            Cell cell = row.getCell(columnIndex);
+            String text = getCellValue(workbook, cell);
+
+            if (key.equals(text)) {
+                return row.getRowNum();
+            }
+        }
+        return -1;
     }
 }

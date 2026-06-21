@@ -1,16 +1,14 @@
 package tests;
 
 import assertions.UserAssertions;
-import endpoints.UserEndPoints;
+import clients.UserClient;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import io.restassured.response.Response;
-import org.apache.logging.log4j.Logger;
 import org.testng.annotations.Test;
-import payload.User;
-import utils.LogManagerUtil;
+import models.User;
 import utils.UserDataBuilder;
 
 @Epic("PET-STORE API")
@@ -18,7 +16,6 @@ import utils.UserDataBuilder;
 public class UserTestsUsingMap {
 
     UserAssertions userAssertions;
-    private static final Logger logger = LogManagerUtil.getLogger(UserTestsUsingFaker.class);
 
     public UserTestsUsingMap(){
         userAssertions = new UserAssertions();
@@ -29,7 +26,7 @@ public class UserTestsUsingMap {
     @Description("Verify that a new user can be created successfully")
     void testCreateUser1() {
         User payload = UserDataBuilder.getTestDataUserPayload("User_1");
-        Response createResponse = UserEndPoints.createUser(payload);
+        Response createResponse = UserClient.createUser(payload);
         userAssertions.verifyStatusCode(createResponse, 200);
     }
 
@@ -38,11 +35,13 @@ public class UserTestsUsingMap {
     @Description("Verify user can be fetch successfully")
     void testGetUser1(){
         User payload = UserDataBuilder.getTestDataUserPayload("User_1");
-        Response getResponse = UserEndPoints.getUser(payload.getUsername());
+        Response getResponse = UserClient.getUser(payload.getUsername());
         userAssertions.verifyStatusCode(getResponse,200);
         userAssertions.verifyUsername(getResponse, payload.getUsername());
-        userAssertions.verifyFirstName(getResponse, payload.getEmail());
-        userAssertions.verifyLastName(getResponse, payload.getPhone());
+        userAssertions.verifyFirstName(getResponse, payload.getFirstName());
+        userAssertions.verifyLastName(getResponse, payload.getLastName());
+        userAssertions.verifyEmail(getResponse, payload.getEmail());
+        userAssertions.verifyPhone(getResponse, payload.getPhone());
     }
 
     @Test(priority = 3)
@@ -50,7 +49,7 @@ public class UserTestsUsingMap {
     @Description("Verify that a new user can be created successfully")
     void testCreateUser2() {
         User payload = UserDataBuilder.getTestDataUserPayload("User_2");
-        Response createResponse = UserEndPoints.createUser(payload);
+        Response createResponse = UserClient.createUser(payload);
         userAssertions.verifyStatusCode(createResponse, 200);
     }
 
@@ -59,10 +58,12 @@ public class UserTestsUsingMap {
     @Description("Verify user can be fetch successfully")
     void testGetUser2(){
         User payload = UserDataBuilder.getTestDataUserPayload("User_2");
-        Response getResponse = UserEndPoints.getUser(payload.getUsername());
+        Response getResponse = UserClient.getUser(payload.getUsername());
         userAssertions.verifyStatusCode(getResponse,200);
         userAssertions.verifyUsername(getResponse, payload.getUsername());
-        userAssertions.verifyFirstName(getResponse, payload.getEmail());
-        userAssertions.verifyLastName(getResponse, payload.getPhone());
+        userAssertions.verifyFirstName(getResponse, payload.getFirstName());
+        userAssertions.verifyLastName(getResponse, payload.getLastName());
+        userAssertions.verifyEmail(getResponse, payload.getEmail());
+        userAssertions.verifyPhone(getResponse, payload.getPhone());
     }
 }

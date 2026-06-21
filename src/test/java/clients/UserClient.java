@@ -1,26 +1,25 @@
-package endpoints;
+package clients;
 
 /* Created to perform CRUD operations for user module */
 
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.logging.log4j.Logger;
-import payload.User;
+import models.User;
 import utils.LogManagerUtil;
 
 import static io.restassured.RestAssured.*;
 
-public class UserEndPoints {
+public class UserClient {
 
-    private static final Logger logger = LogManagerUtil.getLogger(UserEndPoints.class);
+    private static final Logger logger = LogManagerUtil.getLogger(UserClient.class);
 
     public static Response createUser(User payload){
         logger.info("Calling Create User API");
         logger.debug("Endpoint : {}", Routes.POST_URL);
         logger.debug("Request Payload : {}", payload.toString());
         Response createResponse = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
+                .spec(RequestSpecFactory.defaultRequestSpec())
                 .body(payload)
 
         .when()
@@ -48,8 +47,7 @@ public class UserEndPoints {
         logger.debug("Endpoint : {}", Routes.PUT_URL);
         logger.debug("Request Payload : {}", payload);
         Response putResponse = given()
-                .contentType(ContentType.JSON)
-                .accept(ContentType.JSON)
+                .spec(RequestSpecFactory.defaultRequestSpec())
                 .pathParam("username", name)
                 .body(payload)
 

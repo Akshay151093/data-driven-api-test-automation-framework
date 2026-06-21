@@ -1,9 +1,10 @@
 package utils;
 
 import com.github.javafaker.Faker;
+import config.ConfigManager;
 import io.qameta.allure.Step;
 import org.apache.logging.log4j.Logger;
-import payload.User;
+import models.User;
 
 import java.util.LinkedHashMap;
 
@@ -12,6 +13,8 @@ public class UserDataBuilder {
     private static final Logger logger = LogManagerUtil.getLogger(UserDataBuilder.class);
     private static final Faker faker = new Faker();
     private static final TestDataManager testDataManager = new TestDataManager();
+    private static final String FILE = ConfigManager.getInstance().getTestDataFileName();
+    private static final String SHEET = ConfigManager.getInstance().getMapDataSheet();
 
     @Step("Create user payload all data")
     public static User getRandomUserPayload() {
@@ -46,7 +49,7 @@ public class UserDataBuilder {
     public static User getTestDataUserPayload(String testDataLabel){
         logger.info("Building user payload using test data '{}'.", testDataLabel);
         LinkedHashMap<String, String> testData = testDataManager.
-                getTestData(testDataLabel, "TestData_Users", "Input_1");
+                getTestData(testDataLabel, FILE, SHEET);
         logger.debug("Loaded {} test data fields.", testData.size());
         User user = new User();
         user.setId(Integer.parseInt(testData.get("ID")));

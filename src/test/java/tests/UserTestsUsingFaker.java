@@ -1,11 +1,11 @@
 package tests;
 
 import assertions.UserAssertions;
-import endpoints.UserEndPoints;
+import clients.UserClient;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
 import org.testng.annotations.*;
-import payload.User;
+import models.User;
 import utils.UserDataBuilder;
 
 @Epic("PET-STORE API")
@@ -28,7 +28,7 @@ public class UserTestsUsingFaker {
     @Story("Create user")
     @Description("Verify that a new user can be created successfully")
     void testCreateUser() {
-        Response createResponse = UserEndPoints.createUser(payload);
+        Response createResponse = UserClient.createUser(payload);
         userAssertions.verifyStatusCode(createResponse,200);
     }
 
@@ -36,11 +36,13 @@ public class UserTestsUsingFaker {
     @Story("Get user by username")
     @Description("Verify user can be fetch successfully")
     void testGetUser(){
-        Response getResponse = UserEndPoints.getUser(payload.getUsername());
+        Response getResponse = UserClient.getUser(payload.getUsername());
         userAssertions.verifyStatusCode(getResponse,200);
         userAssertions.verifyUsername(getResponse, payload.getUsername());
-        userAssertions.verifyFirstName(getResponse, payload.getEmail());
-        userAssertions.verifyLastName(getResponse, payload.getPhone());
+        userAssertions.verifyFirstName(getResponse, payload.getFirstName());
+        userAssertions.verifyLastName(getResponse, payload.getLastName());
+        userAssertions.verifyEmail(getResponse, payload.getEmail());
+        userAssertions.verifyPhone(getResponse, payload.getPhone());
     }
 
     @Test (priority = 3, dependsOnMethods = "testCreateUser")
@@ -49,10 +51,9 @@ public class UserTestsUsingFaker {
     void testUpdateUserByName() {
         UserDataBuilder.updateUserEmail(payload);
         UserDataBuilder.updateUserPhone(payload);
-        Response updateResponse = UserEndPoints.updateUser(payload.getUsername(), payload);
+        Response updateResponse = UserClient.updateUser(payload.getUsername(), payload);
         userAssertions.verifyStatusCode(updateResponse,200);
-        userAssertions.verifyStatusCode(updateResponse,200);
-        Response getResponse = UserEndPoints.getUser(payload.getUsername());
+        Response getResponse = UserClient.getUser(payload.getUsername());
         userAssertions.verifyEmail(getResponse, payload.getEmail());
         userAssertions.verifyPhone(getResponse, payload.getPhone());
     }
@@ -61,9 +62,9 @@ public class UserTestsUsingFaker {
     @Story("Delete user by username")
     @Description("Verify user can be deleted successfully")
     void testDeleteUserByName() {
-        Response deleteResponse = UserEndPoints.deleteUser(payload.getUsername());
+        Response deleteResponse = UserClient.deleteUser(payload.getUsername());
         userAssertions.verifyStatusCode(deleteResponse,200);
-        Response getResponse = UserEndPoints.getUser(payload.getUsername());
+        Response getResponse = UserClient.getUser(payload.getUsername());
         userAssertions.verifyStatusCode(getResponse,404);
     }
 }

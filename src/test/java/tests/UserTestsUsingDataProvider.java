@@ -1,7 +1,7 @@
 package tests;
 
 import assertions.UserAssertions;
-import endpoints.UserEndPoints;
+import clients.UserClient;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
@@ -9,19 +9,19 @@ import io.qameta.allure.Story;
 import io.restassured.response.Response;
 import org.apache.logging.log4j.Logger;
 import org.testng.annotations.*;
-import payload.User;
+import models.User;
 import utils.DataProviders;
 import utils.LogManagerUtil;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Epic("PET-STORE API")
 @Feature("USER API : DATA PROVIDER")
 public class UserTestsUsingDataProvider {
 
-    User payload;
+    private static final Map<String, User> testUsers = new ConcurrentHashMap<>();
     UserAssertions userAssertions;
-    private static final Logger logger =
-            LogManagerUtil.getLogger(UserTestsUsingDataProvider.class);
-
     public UserTestsUsingDataProvider(){
         userAssertions = new UserAssertions();
     }
@@ -31,7 +31,7 @@ public class UserTestsUsingDataProvider {
     @Description("Verify that new users can be created successfully")
     void testCreateUsers(String id, String un, String fn,
                          String ln, String e, String pwd, String ph, String s) {
-        payload = new User();
+        User payload = new User();
         payload.setId(Integer.parseInt(id));
         payload.setUsername(un);
         payload.setFirstName(fn);
@@ -40,28 +40,36 @@ public class UserTestsUsingDataProvider {
         payload.setPassword(pwd);
         payload.setPhone(ph);
         payload.setUserStatus(Integer.parseInt(s));
-        Response createResponse = UserEndPoints.createUser(payload);
+        Response createResponse = UserClient.createUser(payload);
         userAssertions.verifyStatusCode(createResponse, 200);
+        testUsers.put(payload.getUsername(), payload);
     }
 
     @Test (priority = 2, dependsOnMethods = "testCreateUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)
     @Story("Get users")
     @Description("Verify users can be fetch successfully")
     void testGetUsers(String un){
-        Response getResponse = UserEndPoints.getUser(un);
-        userAssertions.verifyStatusCode(getResponse,200);
-        userAssertions.verifyUsername(getResponse, payload.getUsername());
-        userAssertions.verifyFirstName(getResponse, payload.getEmail());
-        userAssertions.verifyLastName(getResponse, payload.getPhone());
+        User expectedUser = testUsers.get(un);
+        if (expectedUser == null) {
+            throw new IllegalStateException("No created user found for username: " + un);
+        }
+        Response getResponse = UserClient.getUser(un);
+        userAssertions.verifyStatusCode(getResponse, 200);
+        userAssertions.verifyUsername(getResponse, expectedUser.getUsername());
+        userAssertions.verifyFirstName(getResponse, expectedUser.getFirstName());
+        userAssertions.verifyLastName(getResponse, expectedUser.getLastName());
+        userAssertions.verifyEmail(getResponse, expectedUser.getEmail());
+        userAssertions.verifyPhone(getResponse, expectedUser.getPhone());
     }
 
     @Test (priority = 3, dependsOnMethods = "testGetUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)
     @Story("Delete users")
     @Description("Verify that users can be deleted successfully")
     void testDeleteUsers(String un){
-        Response deleteResponse =UserEndPoints.deleteUser(un);
+        Response deleteResponse = UserClient.deleteUser(un);
         userAssertions.verifyStatusCode(deleteResponse,200);
-        Response getResponse = UserEndPoints.getUser(un);
+        Response getResponse = UserClient.getUser(un);
         userAssertions.verifyStatusCode(getResponse,404);
+        testUsers.remove(un);
     }
 }

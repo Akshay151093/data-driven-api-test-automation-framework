@@ -1,4 +1,4 @@
-package reader;
+package config;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -8,17 +8,16 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class PropertyFileReader {
+public class ConfigManager {
 
-    private static final Logger log = LoggerFactory.getLogger(PropertyFileReader.class);
-
-    private static PropertyFileReader instance;
+    private static final Logger log = LoggerFactory.getLogger(ConfigManager.class);
+    private static ConfigManager instance;
     private final Properties properties;
 
-    public static PropertyFileReader getInstance() {
+    public static ConfigManager getInstance() {
         if (instance == null) {
             try {
-                instance = new PropertyFileReader();
+                instance = new ConfigManager();
             } catch (FileNotFoundException e) {
                 throw new RuntimeException(e);
             }
@@ -26,10 +25,10 @@ public class PropertyFileReader {
         return instance;
     }
 
-    public PropertyFileReader() throws FileNotFoundException {
+    private ConfigManager() throws FileNotFoundException {
         properties = new Properties();
         try (InputStream reader = getClass().getClassLoader()
-                .getResourceAsStream("src/test/resources/configurations/application.properties")) {
+                .getResourceAsStream("configurations/application.properties")) {
             if (reader == null) {
                 log.debug("Config | FAIL | classpath resource=configurations/application.properties");
                 throw new FileNotFoundException("application.properties not found in classpath.");
@@ -43,10 +42,12 @@ public class PropertyFileReader {
     }
 
     private String getProperty(String key) {
-        String value = properties.getProperty(key);
+        String value = System.getProperty(key);
         if (value == null || value.isEmpty()) {
-            log.debug("Config | FAIL | key={} not found", key);
-            throw new RuntimeException(key + " not specified in application.properties");
+            value = System.getenv(key);
+        }
+        if (value == null || value.isEmpty()) {
+            value = properties.getProperty(key);
         }
         log.debug("getProperty | SUCCESS | key={} | gotValue={}", key, value);
         return value;
@@ -66,5 +67,9 @@ public class PropertyFileReader {
 
     public String getDataProviderSheet() {
         return getProperty("dataProviderSheet");
+    }
+
+    public String getMapDataSheet() {
+        return getProperty("mapDataSheet");
     }
 }

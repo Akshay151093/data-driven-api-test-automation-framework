@@ -1,13 +1,13 @@
-package payload;
+package models;
 
 public class User {
-    int id;
-    String username;
-    String firstName;
-    String lastName;
-    String email;
-    String password;
-    String phone;
+    private int id;
+    private String username;
+    private String firstName;
+    private String lastName;
+    private String email;
+    private String password;
+    private String phone;
 
     int userStatus;
 
@@ -41,6 +41,11 @@ public class User {
 
     public void setUserStatus(int userStatus) {
         this.userStatus = userStatus;
+    }
+
+
+    public int getId() {
+        return id;
     }
 
     public String getUsername() {
