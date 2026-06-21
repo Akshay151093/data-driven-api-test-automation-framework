@@ -1,21 +1,22 @@
 name: API Automation Tests
 
-workflow_dispatch:
-  inputs:
-    suiteXmlFile:
-      description: 'TestNG suite XML file to execute'
-      required: true
-      default: 'testng.xml'
-      type: choice
-      options:
-        - testng.xml
-        - testng-smoke.xml
-        - testng-regression.xml
-        - testng-user.xml
-        - testng-negative.xml
+on:
+  workflow_dispatch:
+    inputs:
+      suiteXmlFile:
+        description: 'TestNG suite XML file to execute'
+        required: true
+        default: 'testng.xml'
+        type: choice
+        options:
+          - testng.xml
+          - testng-smoke.xml
+          - testng-regression.xml
+          - testng-user.xml
+          - testng-negative.xml
 
-schedule:
- - corn: '30 18 * * 1'
+  schedule:
+    - cron: '30 18 * * 1'
 
 jobs:
   api-tests:
