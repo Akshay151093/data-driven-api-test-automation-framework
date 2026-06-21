@@ -8,8 +8,7 @@ public class User {
     private String email;
     private String password;
     private String phone;
-
-    int userStatus;
+    private int userStatus;
 
     public void setId(int id) {
         this.id = id;
@@ -43,7 +42,6 @@ public class User {
         this.userStatus = userStatus;
     }
 
-
     public int getId() {
         return id;
     }
@@ -74,5 +72,18 @@ public class User {
 
     public int getUserStatus() {
         return userStatus;
+    }
+
+    @Override
+    public String toString() {
+        return "User{" +
+                "id=" + id +
+                ", username='" + username + '\'' +
+                ", firstName='" + firstName + '\'' +
+                ", lastName='" + lastName + '\'' +
+                ", email='" + email + '\'' +
+                ", phone='" + phone + '\'' +
+                ", userStatus=" + userStatus +
+                '}';
     }
 }

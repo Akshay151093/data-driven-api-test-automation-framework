@@ -49,6 +49,9 @@ public class ConfigManager {
         if (value == null || value.isEmpty()) {
             value = properties.getProperty(key);
         }
+        if (value == null || value.isEmpty()) {
+            throw new RuntimeException(key + " not specified in application.properties, system properties, or environment variables");
+        }
         log.debug("getProperty | SUCCESS | key={} | gotValue={}", key, value);
         return value;
     }

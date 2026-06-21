@@ -1,32 +1,25 @@
 package tests;
 
-import assertions.UserAssertions;
 import clients.UserClient;
 import io.qameta.allure.Description;
 import io.qameta.allure.Epic;
 import io.qameta.allure.Feature;
 import io.qameta.allure.Story;
 import io.restassured.response.Response;
-import org.apache.logging.log4j.Logger;
 import org.testng.annotations.*;
 import models.User;
 import utils.DataProviders;
-import utils.LogManagerUtil;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Epic("PET-STORE API")
 @Feature("USER API : DATA PROVIDER")
-public class UserTestsUsingDataProvider {
+public class UserTestsUsingDataProvider extends BaseTest{
 
     private static final Map<String, User> testUsers = new ConcurrentHashMap<>();
-    UserAssertions userAssertions;
-    public UserTestsUsingDataProvider(){
-        userAssertions = new UserAssertions();
-    }
 
-    @Test(priority = 1, dataProvider = "payload", dataProviderClass = DataProviders.class)
+    @Test(priority = 1, groups = {"user","smoke"}, dataProvider = "payload", dataProviderClass = DataProviders.class)
     @Story("Create users")
     @Description("Verify that new users can be created successfully")
     void testCreateUsers(String id, String un, String fn,
@@ -45,7 +38,7 @@ public class UserTestsUsingDataProvider {
         testUsers.put(payload.getUsername(), payload);
     }
 
-    @Test (priority = 2, dependsOnMethods = "testCreateUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)
+    @Test (priority = 2, groups = {"user","regression"}, dependsOnMethods = "testCreateUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)
     @Story("Get users")
     @Description("Verify users can be fetch successfully")
     void testGetUsers(String un){
@@ -55,6 +48,7 @@ public class UserTestsUsingDataProvider {
         }
         Response getResponse = UserClient.getUser(un);
         userAssertions.verifyStatusCode(getResponse, 200);
+        userAssertions.verifyUserSchema(getResponse);
         userAssertions.verifyUsername(getResponse, expectedUser.getUsername());
         userAssertions.verifyFirstName(getResponse, expectedUser.getFirstName());
         userAssertions.verifyLastName(getResponse, expectedUser.getLastName());
@@ -62,7 +56,7 @@ public class UserTestsUsingDataProvider {
         userAssertions.verifyPhone(getResponse, expectedUser.getPhone());
     }
 
-    @Test (priority = 3, dependsOnMethods = "testGetUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)
+    @Test (priority = 3, groups = {"user","regression"}, dependsOnMethods = "testGetUsers", dataProvider = "usernames", dataProviderClass = DataProviders.class)
     @Story("Delete users")
     @Description("Verify that users can be deleted successfully")
     void testDeleteUsers(String un){

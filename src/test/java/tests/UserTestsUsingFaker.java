@@ -1,6 +1,5 @@
 package tests;
 
-import assertions.UserAssertions;
 import clients.UserClient;
 import io.qameta.allure.*;
 import io.restassured.response.Response;
@@ -10,21 +9,16 @@ import utils.UserDataBuilder;
 
 @Epic("PET-STORE API")
 @Feature("USER API : FAKER DATA")
-public class UserTestsUsingFaker {
+public class UserTestsUsingFaker extends BaseTest{
 
     User payload;
-    UserAssertions userAssertions;
-
-    public UserTestsUsingFaker(){
-        userAssertions = new UserAssertions();
-    }
 
     @BeforeClass
     public void setupData(){
         payload = UserDataBuilder.getRandomUserPayload();
     }
 
-    @Test (priority = 1)
+    @Test (priority = 1, groups = {"user","smoke"})
     @Story("Create user")
     @Description("Verify that a new user can be created successfully")
     void testCreateUser() {
@@ -32,12 +26,13 @@ public class UserTestsUsingFaker {
         userAssertions.verifyStatusCode(createResponse,200);
     }
 
-    @Test (priority = 2, dependsOnMethods = "testCreateUser")
+    @Test (priority = 2, groups = {"user","regression"}, dependsOnMethods = "testCreateUser")
     @Story("Get user by username")
     @Description("Verify user can be fetch successfully")
     void testGetUser(){
         Response getResponse = UserClient.getUser(payload.getUsername());
         userAssertions.verifyStatusCode(getResponse,200);
+        userAssertions.verifyUserSchema(getResponse);
         userAssertions.verifyUsername(getResponse, payload.getUsername());
         userAssertions.verifyFirstName(getResponse, payload.getFirstName());
         userAssertions.verifyLastName(getResponse, payload.getLastName());
@@ -45,7 +40,7 @@ public class UserTestsUsingFaker {
         userAssertions.verifyPhone(getResponse, payload.getPhone());
     }
 
-    @Test (priority = 3, dependsOnMethods = "testCreateUser")
+    @Test (priority = 3, groups = {"user","regression"}, dependsOnMethods = "testCreateUser")
     @Story("Update user by username")
     @Description("Verify user can be updated successfully")
     void testUpdateUserByName() {
@@ -58,7 +53,7 @@ public class UserTestsUsingFaker {
         userAssertions.verifyPhone(getResponse, payload.getPhone());
     }
 
-    @Test (priority = 4, dependsOnMethods = "testCreateUser")
+    @Test (priority = 4, groups = {"user","regression"}, dependsOnMethods = "testCreateUser")
     @Story("Delete user by username")
     @Description("Verify user can be deleted successfully")
     void testDeleteUserByName() {

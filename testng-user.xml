@@ -2,13 +2,27 @@
 
 <!DOCTYPE suite SYSTEM "https://testng.org/testng-1.0.dtd">
 
-<!-- Run all the tests -->
+<!-- Run only tests having group user from tests package. -->
 <suite name="API Automation Regression Suite"
        verbose="2"
        parallel="classes"
        thread-count="3">
 
+    <!-- Environment -->
+    <parameter name="environment" value="QA"/>
+
+    <!-- Listeners -->
+    <listeners>
+        <listener class-name="listeners.TestListener"/>
+    </listeners>
+
     <test name="User API Tests">
+        <groups>
+            <run>
+                <include name="user"/>
+            </run>
+        </groups>
+
         <classes>
             <class name="tests.UserTestsUsingDataProvider"/>
             <class name="tests.UserTestsUsingMap"/>

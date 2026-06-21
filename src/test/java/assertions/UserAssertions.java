@@ -6,6 +6,8 @@ import org.apache.logging.log4j.Logger;
 import org.testng.Assert;
 import utils.LogManagerUtil;
 
+import static io.restassured.module.jsv.JsonSchemaValidator.matchesJsonSchemaInClasspath;
+
 public class UserAssertions {
 
     private static final Logger logger = LogManagerUtil.getLogger(UserAssertions.class);
@@ -93,5 +95,12 @@ public class UserAssertions {
                 "User ID verification failed"
         );
         logger.info("Id validation successful");
+    }
+
+    @Step("Verify user response schema")
+    public void verifyUserSchema(Response response) {
+        logger.debug("Verifying user response schema");
+        response.then().body(matchesJsonSchemaInClasspath("schemas/user-schema.json"));
+        logger.info("User schema validation successful");
     }
 }

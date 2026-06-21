@@ -1,8 +1,5 @@
 package clients;
 
-/* Created to perform CRUD operations for user module */
-
-import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.apache.logging.log4j.Logger;
 import models.User;
@@ -16,14 +13,15 @@ public class UserClient {
 
     public static Response createUser(User payload){
         logger.info("Calling Create User API");
-        logger.debug("Endpoint : {}", Routes.POST_URL);
+        logger.debug("Endpoint : {}", Routes.USER);
         logger.debug("Request Payload : {}", payload.toString());
+
         Response createResponse = given()
                 .spec(RequestSpecFactory.defaultRequestSpec())
                 .body(payload)
-
         .when()
-                .post(Routes.POST_URL);
+                .post(Routes.USER);
+
         logger.info("Create User completed");
         logger.debug("Response Body : {}", createResponse.asPrettyString());
         return createResponse;
@@ -31,12 +29,15 @@ public class UserClient {
 
     public static Response getUser (String name){
         logger.info("Calling Get User API");
-        logger.debug("Endpoint : {}", Routes.GET_URL);
+        logger.debug("Endpoint : {}", Routes.USER_BY_USERNAME);
         logger.debug("Request Name : {}", name);
+
         Response getResponse = given()
-                        .pathParam("username",name)
+                .spec(RequestSpecFactory.defaultRequestSpec())
+                .pathParam("username",name)
         .when()
-                .get(Routes.GET_URL);
+                .get(Routes.USER_BY_USERNAME);
+
         logger.info("Get User completed");
         logger.debug("Response Body : {}", getResponse.asPrettyString());
         return getResponse;
@@ -44,15 +45,16 @@ public class UserClient {
 
     public static Response updateUser (String name, User payload){
         logger.info("Calling Update User API");
-        logger.debug("Endpoint : {}", Routes.PUT_URL);
+        logger.debug("Endpoint : {}", Routes.USER_BY_USERNAME);
         logger.debug("Request Payload : {}", payload);
+
         Response putResponse = given()
                 .spec(RequestSpecFactory.defaultRequestSpec())
                 .pathParam("username", name)
                 .body(payload)
-
         .when()
-                .put(Routes.PUT_URL);
+                .put(Routes.USER_BY_USERNAME);
+
         logger.info("Update User completed");
         logger.debug("Response Body : {}", putResponse.asPrettyString());
         return putResponse;
@@ -60,12 +62,13 @@ public class UserClient {
 
     public static Response deleteUser (String name){
         logger.info("Calling Delete User API");
-        logger.debug("Endpoint : {}", Routes.DELETE_URL);
+        logger.debug("Endpoint : {}", Routes.USER_BY_USERNAME);
         logger.debug("Request Name : {}", name);
         Response deleteResponse = given()
+                .spec(RequestSpecFactory.defaultRequestSpec())
                 .pathParam("username",name)
         .when()
-                .delete(Routes.DELETE_URL);
+                .delete(Routes.USER_BY_USERNAME);
         logger.info("Delete User completed");
         logger.debug("Response Body : {}", deleteResponse.asPrettyString());
         return deleteResponse;
