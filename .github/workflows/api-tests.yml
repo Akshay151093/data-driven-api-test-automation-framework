@@ -14,6 +14,9 @@ workflow_dispatch:
         - testng-user.xml
         - testng-negative.xml
 
+schedule:
+ - corn: '30 18 * * 1'
+
 jobs:
   api-tests:
     runs-on: ubuntu-latest
