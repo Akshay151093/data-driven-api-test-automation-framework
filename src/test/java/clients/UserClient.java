@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import models.User;
 import utils.LogManagerUtil;
 
+import java.util.Objects;
+
 import static io.restassured.RestAssured.*;
 
 public class UserClient {
@@ -12,9 +14,10 @@ public class UserClient {
     private static final Logger logger = LogManagerUtil.getLogger(UserClient.class);
 
     public static Response createUser(User payload){
+        Objects.requireNonNull(payload, "User payload must not be null");
         logger.info("Calling Create User API");
         logger.debug("Endpoint : {}", Routes.USER);
-        logger.debug("Request Payload : {}", payload.toString());
+        logger.debug("Request Payload : {}", payload);
 
         Response createResponse = given()
                 .spec(RequestSpecFactory.defaultRequestSpec())
@@ -44,6 +47,7 @@ public class UserClient {
     }
 
     public static Response updateUser (String name, User payload){
+        Objects.requireNonNull(payload, "User payload must not be null");
         logger.info("Calling Update User API");
         logger.debug("Endpoint : {}", Routes.USER_BY_USERNAME);
         logger.debug("Request Payload : {}", payload);

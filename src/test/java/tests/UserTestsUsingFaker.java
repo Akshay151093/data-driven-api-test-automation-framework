@@ -13,7 +13,7 @@ public class UserTestsUsingFaker extends BaseTest{
 
     User payload;
 
-    @BeforeClass
+    @BeforeClass(alwaysRun = true)
     public void setupData(){
         payload = UserDataBuilder.getRandomUserPayload();
     }

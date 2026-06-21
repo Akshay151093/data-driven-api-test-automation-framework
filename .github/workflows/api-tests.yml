@@ -18,9 +18,18 @@ on:
   schedule:
     - cron: '30 18 * * 1'
 
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
 jobs:
   api-tests:
     runs-on: ubuntu-latest
+
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
 
     steps:
       - name: Checkout repository
@@ -42,6 +51,7 @@ jobs:
         with:
           name: surefire-reports
           path: target/surefire-reports
+          if-no-files-found: warn
 
       - name: Upload Allure results
         if: always()
@@ -49,6 +59,7 @@ jobs:
         with:
           name: allure-results
           path: target/allure-results
+          if-no-files-found: warn
 
       - name: Upload execution logs
         if: always()
@@ -56,3 +67,27 @@ jobs:
         with:
           name: execution-logs
           path: logs
+          if-no-files-found: warn
+
+      - name: Install Allure CLI
+        if: always()
+        run: |
+          wget https://github.com/allure-framework/allure2/releases/download/2.29.0/allure-2.29.0.tgz
+          tar -zxvf allure-2.29.0.tgz
+          sudo mv allure-2.29.0 /opt/allure
+          sudo ln -s /opt/allure/bin/allure /usr/bin/allure
+
+      - name: Generate Allure HTML report
+        if: always()
+        run: allure generate target/allure-results --clean -o target/allure-report
+
+      - name: Upload Allure report to GitHub Pages artifact
+        if: always()
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: target/allure-report
+
+      - name: Deploy Allure report to GitHub Pages
+        if: always()
+        id: deployment
+        uses: actions/deploy-pages@v4
